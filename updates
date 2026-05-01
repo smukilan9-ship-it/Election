@@ -1,0 +1,34 @@
+
+def get_winners_for_election(election_id):
+    con = connect_db()
+    cursor = con.cursor()
+    cursor.execute(
+        """SELECT candidates.role, candidates.name, candidates.kutumba, COUNT(votes.id) as vote_count
+           FROM candidates
+           LEFT JOIN votes  ON votes.candidate_id = candidates.c_id AND votes.election_id = candidates.election_id
+           WHERE candidates.election_id = ?
+           GROUP BY candidates.c_id
+           ORDER BY candidates.role ASC, vote_count DESC""",(election_id,))
+    rows = cursor.fetchall()
+    con.close()
+    by_role = {}
+    for row in rows:
+        role, name, kutumba, votes = row
+        if role not in by_role:
+            by_role[role] = []
+        by_role[role].append({"name": name, "kutumba": kutumba, "votes": votes})
+    winners = []
+    for role, candidates in by_role.items():
+        is_sports = "Sports Captain" in role
+        if is_sports:
+            top = candidates[0]
+            winners.append({"role": role, "kutumba": None, "name": top["name"], "votes": top["votes"],})
+        else:
+            by_kutumba = {}
+            for candidate in candidates:
+                k = candidate["kutumba"]
+                if k not in by_kutumba:
+                    by_kutumba[k] = candidate
+            for kutumba, top in sorted(by_kutumba.items()):
+                winners.append({"role": role, "kutumba": kutumba, "name": top["name"], "votes": top["votes"],})
+    return winners

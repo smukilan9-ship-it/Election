@@ -1,0 +1,8 @@
+customtkinter
+tkinter.filedialog
+tkinter.messagebox
+pandas
+socket
+flask
+sqlite3
+openpyxl
